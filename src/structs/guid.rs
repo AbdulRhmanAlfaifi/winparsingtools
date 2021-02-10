@@ -3,8 +3,8 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use std::fmt::{Result as FmtResult, Display, Formatter};
 use serde::ser;
 
-// GUID parser from https://github.com/omerbenamram/winstructs/blob/master/src/guid.rs
-
+/// [GUID](https://docs.microsoft.com/en-us/windows/win32/api/guiddef/ns-guiddef-guid) struct parser.
+/// From [omerbenamram](https://github.com/omerbenamram/winstructs/blob/master/src/guid.rs)
 #[derive(Debug, Clone)]
 pub struct Guid {
     data1: u32,

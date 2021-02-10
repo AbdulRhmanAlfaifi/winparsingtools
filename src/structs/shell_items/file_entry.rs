@@ -7,7 +7,7 @@ use crate::structs::ExtraDataBlock;
 use super::Name;
 use serde::Serialize;
 
-/// FileEntryShellItem struct parser.
+/// [FileEntryShellItem](https://github.com/libyal/libfwsi/blob/main/documentation/Windows%20Shell%20Item%20format.asciidoc#file_entry_shell_item) struct parser.
 #[derive(Debug, Serialize)]
 pub struct FileEntryShellItem{
     pub is_file: bool,
@@ -24,22 +24,18 @@ impl FileEntryShellItem{
     }
 
     pub fn from_reader<R: Read+Seek>(r: &mut R) -> Result<Self>{
-        let id = r.read_u8()?;
+        let class_type = r.read_u8()?;
         let mut is_file = false;
         let mut is_utf16 = false;
-        match id & 0x8f {
-            0x2 => {is_file = true},
-            0x4 => {is_utf16 = true},
-            _ => {}
-        };
-        r.read_u8()?; // remove unknown byte  
+        if class_type & 0x2 > 0 {is_file = true};
+        if class_type & 0x4 > 0 {is_utf16 = true};
+        r.read_u8()?; // remove unknown byte
         let file_size = r.read_u32::<LittleEndian>()?;
-        let mut dos_date_time_bytes = [0;4];
         let last_modified = DosDateTime::from_u32(r.read_u32::<LittleEndian>()?)?;
-        let file_attr_flags = FileAttributesFlags::from_u32(r.read_u16::<LittleEndian>()? as u32); 
+        let file_attr_flags = FileAttributesFlags::from_u32(r.read_u16::<LittleEndian>()? as u32);
         let name = match is_utf16{
-            true => utils::read_utf16_string(r,Option::None)?,
-            false => utils::read_utf8_string(r,Option::None)?
+            true => utils::read_utf16_string(r,None)?,
+            false => utils::read_utf8_string(r,None)?
         };
         if !is_utf16 {
             //remove align byte
@@ -62,6 +58,11 @@ impl FileEntryShellItem{
 
 impl Name for FileEntryShellItem {
     fn name(&self) -> String {
-        self.name.clone()
+        match &self.extention_block {
+            Some(eb) => {
+                eb.primary_name.to_owned()
+            },
+            None => self.name.to_owned() 
+        }
     }
 }

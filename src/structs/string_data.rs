@@ -4,10 +4,11 @@ use std::fmt::{Formatter, Display, Result as FmtResult};
 use crate::utils::read_utf16_string;
 use serde::{Serialize, Serializer};
 
+/// [StringData](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/17b69472-0f34-4bcf-b290-eccdb8de224b) struct parser.
 #[derive(Debug)]
 pub struct StringData {
-    size: u16,
-    string: String
+    pub size: u16,
+    pub string: String
 }
 
 impl StringData {

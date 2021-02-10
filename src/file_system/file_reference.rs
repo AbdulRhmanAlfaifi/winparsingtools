@@ -1,6 +1,3 @@
-//! Contains file system related windows structs.
-
-#![allow(non_camel_case_types)]
 use std::io::{Result, Cursor, Read};
 use std::fmt::{Formatter, Display, Result as FmtResult};
 use byteorder::{ReadBytesExt, LittleEndian};
@@ -14,10 +11,12 @@ pub struct FileReference {
 }
 
 impl FileReference{
+    /// Create FileReference from bytes.
     pub fn from_buffer(buf: &[u8]) -> Result<FileReference>{
         Self::from_reader(&mut Cursor::new(buf))
     }
-
+    
+    /// Create FileReference from instent that implements `Read` trait.
     pub fn from_reader<R: Read>(r: &mut R) -> Result<FileReference>{
         let mut mft_entry_bytes = [0;6];
         r.read_exact(&mut mft_entry_bytes).unwrap();
@@ -28,13 +27,14 @@ impl FileReference{
         let sequence_number = r.read_u16::<LittleEndian>().unwrap();
         Ok(
             FileReference{
-                mft_entry: mft_entry,
-                sequence_number: sequence_number
+                mft_entry,
+                sequence_number
             }
         )
     }
 }
 
+/// [File system attributes flags](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/ca28ec38-f155-4768-81d6-4bfeb8586fc9) parser.
 #[derive(Debug, Serialize)]
 pub enum FileAttributesFlags{
     READONLY,

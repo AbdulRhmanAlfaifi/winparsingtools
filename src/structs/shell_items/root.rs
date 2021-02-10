@@ -35,6 +35,7 @@ impl From<u8> for RootShellItemSortIndex {
     }
 }
 
+/// RootShellItem struct parser.
 #[derive(Debug, Serialize)]
 pub struct RootShellItem {
     pub sort_index: RootShellItemSortIndex,
@@ -47,7 +48,7 @@ impl RootShellItem {
     }
 
     pub fn from_reader<R: Read>(r: &mut R) -> Result<Self>{
-        let class_type = r.read_u8()?; // need it later of flags is needed
+        let _class_type = r.read_u8()?; // used to extract flags
         let sort_index = RootShellItemSortIndex::from(r.read_u8()?);
         let guid = guid::Guid::from_reader(r)?;
         Ok(Self {

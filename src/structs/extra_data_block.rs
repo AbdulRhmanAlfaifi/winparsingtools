@@ -5,25 +5,25 @@ use crate::utils::{read_utf16_string, read_utf8_string};
 use crate::file_system::FileReference;
 use serde::Serialize;
 
-/// ExtraDataBlock (BEEF0004) struct parser.
+/// [ExtraDataBlock (BEEF0004)](https://github.com/libyal/libfwsi/blob/main/documentation/Windows%20Shell%20Item%20format.asciidoc#extension_block_0xbeef0004) struct parser.
 #[derive(Debug, Serialize)]
 pub struct ExtraDataBlock {
     #[serde(skip_serializing)]
-    size: u16,
+    pub size: u16,
     #[serde(skip_serializing)]
-    version: u16,
+    pub version: u16,
     #[serde(skip_serializing)]
-    signature: [u8;4],
-    ctime: DosDateTime,
-    atime: DosDateTime,
+    pub signature: [u8;4],
+    pub ctime: DosDateTime,
+    pub atime: DosDateTime,
     #[serde(skip_serializing)]
-    identifier: u16,
-    file_ref: Option<FileReference>,
+    pub identifier: u16,
+    pub file_ref: Option<FileReference>,
     #[serde(skip_serializing)]
-    long_str_size: u16,
-    primary_name: String,
+    pub long_str_size: u16,
+    pub primary_name: String,
     #[serde(skip_serializing)]
-    version_offset: Option<u16>
+    pub version_offset: Option<u16>
 }
 
 impl ExtraDataBlock{

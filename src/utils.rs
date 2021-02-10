@@ -64,5 +64,5 @@ pub fn read_utf8_string<R: Read>(stream: &mut R, len: Option<usize>) -> Result<S
             buffer.push(next_char);
         },
     }
-    from_utf8(&buffer).map_err(|_e| io::Error::from(io::ErrorKind::InvalidData)).map(|r| r.to_string())
+    from_utf8(buffer.into_iter().take_while(|&byte| byte != 0x00).collect::<Vec<u8>>().as_slice()).map_err(|_e| io::Error::from(io::ErrorKind::InvalidData)).map(|r| r.to_string())
 }
