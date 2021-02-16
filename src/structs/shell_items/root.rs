@@ -60,6 +60,9 @@ impl RootShellItem {
 
 impl Name for RootShellItem {
     fn name(&self) -> String {
-        format!("{:?}",&self.sort_index)
+        match &self.sort_index {
+            RootShellItemSortIndex::UNKNOWN => format!("{}",&self.guid),
+            other => format!("{:?}",other)
+        }
     }
 }

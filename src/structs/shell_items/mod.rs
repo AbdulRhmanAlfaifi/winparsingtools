@@ -5,17 +5,46 @@ mod file_entry;
 mod volume;
 mod root;
 mod network_location;
+mod users_files_folder;
+mod uri;
+mod control_panel_category;
+mod control_panel_item;
 mod id_list;
 
 use file_entry::FileEntryShellItem;
 use volume::VolumeShellItem;
 use root::RootShellItem;
 use network_location::NetworkLocationShellItem;
+use users_files_folder::UsersFilesFolderShellItem;
+use uri::URIShellItem;
+use control_panel_category::ControlPanelCategoryShellItem;
+use control_panel_item::ControlPanelItemShellItem;
 pub use id_list::IDList;
 
-use std::io::{Result, Cursor, Read, Seek, SeekFrom};
+use std::{fmt::{Display, Formatter, Result as FmtResult}, io::{Result, Cursor, Read, Seek, SeekFrom}};
 use byteorder::{LittleEndian, ReadBytesExt};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
+
+#[derive(Debug)]
+pub struct UnimplementedShellItem(Vec<u8>);
+
+impl Display for UnimplementedShellItem {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f,
+            "{}",
+            self.0.to_owned().into_iter().map(|b| format!("{:02X}", b)).collect::<String>()
+        )
+    }
+}
+
+impl Serialize for UnimplementedShellItem {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
 
 /// The implemented types for shell items.
 #[derive(Debug,Serialize)]
@@ -24,7 +53,11 @@ pub enum ShellItemTypes {
     Volume(VolumeShellItem),
     Root(RootShellItem),
     NetworkLocation(NetworkLocationShellItem),
-    Unimpleminted(String),
+    UsersFilesFolder(UsersFilesFolderShellItem),
+    URI(URIShellItem),
+    ControlPanelCategory(ControlPanelCategoryShellItem),
+    ControlPanelItem(ControlPanelItemShellItem),
+    Unimpleminted(UnimplementedShellItem),
 }
 
 /// ShellItem is struct that reads the struct bytes and decide which shellitem struct to use (FileEntryShellItem, VolumeShellItem, etc).
@@ -74,18 +107,22 @@ impl ShellItem {
     /// ```
     pub fn from_reader<R: Read + Seek>(r: &mut R) -> Result<Self> {
         let size = r.read_u16::<LittleEndian>()?;
-        let class_type = r.read_u8()? & 0x70;
+        let class_type = r.read_u8()?;
         r.seek(SeekFrom::Current(-1))?;
         let mut shell_item_buf = vec![0;(size - 2) as usize];
         r.read_exact(&mut shell_item_buf)?;
         let shell_item_data;
 
         match class_type {
-            0x10 => shell_item_data = Some(ShellItemTypes::Root(RootShellItem::from_buffer(&shell_item_buf)?)),
-            0x20 => shell_item_data = Some(ShellItemTypes::Volume(VolumeShellItem::from_buffer(&shell_item_buf)?)),
-            0x30 => shell_item_data = Some(ShellItemTypes::FileEntry(FileEntryShellItem::from_buffer(&shell_item_buf)?)),
-            0x40 => shell_item_data = Some(ShellItemTypes::NetworkLocation(NetworkLocationShellItem::from_buffer(&shell_item_buf)?)),
-            _ => shell_item_data = Some(ShellItemTypes::Unimpleminted(String::from("Unimplemented ShellItem")))
+            class_type if class_type & 0x70 == 0x10 => shell_item_data = Some(ShellItemTypes::Root(RootShellItem::from_buffer(&shell_item_buf)?)),
+            class_type if class_type & 0x70 == 0x20 => shell_item_data = Some(ShellItemTypes::Volume(VolumeShellItem::from_buffer(&shell_item_buf)?)),
+            class_type if class_type & 0x70 == 0x30 => shell_item_data = Some(ShellItemTypes::FileEntry(FileEntryShellItem::from_buffer(&shell_item_buf)?)),
+            class_type if class_type & 0x70 == 0x40 => shell_item_data = Some(ShellItemTypes::NetworkLocation(NetworkLocationShellItem::from_buffer(&shell_item_buf)?)),
+            0x74 => shell_item_data = Some(ShellItemTypes::UsersFilesFolder(UsersFilesFolderShellItem::from_buffer(&shell_item_buf)?)),
+            0x61 => shell_item_data = Some(ShellItemTypes::URI(URIShellItem::from_buffer(&shell_item_buf)?)),
+            0x01 => shell_item_data = Some(ShellItemTypes::ControlPanelCategory(ControlPanelCategoryShellItem::from_buffer(&shell_item_buf)?)),
+            0x71 => shell_item_data = Some(ShellItemTypes::ControlPanelItem(ControlPanelItemShellItem::from_buffer(&shell_item_buf)?)),
+            _ => shell_item_data = Some(ShellItemTypes::Unimpleminted(UnimplementedShellItem(shell_item_buf.to_vec())))
         };
 
         Ok(Self {
@@ -93,6 +130,26 @@ impl ShellItem {
             class_type,
             shell_item_data
         })
+    }
+}
+
+impl Name for ShellItem {
+    fn name(&self) -> String {
+        match &self.shell_item_data {
+            Some(data) => {
+                match data {
+                    ShellItemTypes::Root(item) => item.name(),
+                    ShellItemTypes::Volume(item) => item.name(),
+                    ShellItemTypes::FileEntry(item) => item.name(),
+                    ShellItemTypes::URI(item) => item.name(),
+                    ShellItemTypes::ControlPanelCategory(item) => item.name(),
+                    ShellItemTypes::UsersFilesFolder(item) => item.name(),
+                    ShellItemTypes::ControlPanelItem(item) => item.name(),
+                    _ => String::from("{NONE}")
+                }
+            },
+            None => String::from("{NONE}")
+        }
     }
 }
 

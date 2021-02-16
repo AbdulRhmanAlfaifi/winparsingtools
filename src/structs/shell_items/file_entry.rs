@@ -12,7 +12,7 @@ use serde::Serialize;
 pub struct FileEntryShellItem{
     pub is_file: bool,
     pub file_size: u32,
-    pub last_modified: DosDateTime,
+    pub mtime: DosDateTime,
     pub file_attr_flags: Vec<FileAttributesFlags>,
     pub name: String,
     pub extention_block: Option<ExtraDataBlock>
@@ -31,7 +31,7 @@ impl FileEntryShellItem{
         if class_type & 0x4 > 0 {is_utf16 = true};
         r.read_u8()?; // remove unknown byte
         let file_size = r.read_u32::<LittleEndian>()?;
-        let last_modified = DosDateTime::from_u32(r.read_u32::<LittleEndian>()?)?;
+        let mtime = DosDateTime::from_u32(r.read_u32::<LittleEndian>()?)?;
         let file_attr_flags = FileAttributesFlags::from_u32(r.read_u16::<LittleEndian>()? as u32);
         let name = match is_utf16{
             true => utils::read_utf16_string(r,None)?,
@@ -39,8 +39,26 @@ impl FileEntryShellItem{
         };
         if !is_utf16 {
             //remove align byte
-            if r.read_u8()? != 0 {
-                r.seek(SeekFrom::Current(-1))?;
+            loop {
+                match r.read_u8() {
+                    Ok(byte) => {
+                        if byte != 0 {
+                            r.seek(SeekFrom::Current(-1))?;
+                            break;
+                        }
+                    },
+                    Err(_) => {
+                        return Ok(
+                            Self{
+                                is_file,
+                                file_size,
+                                mtime,
+                                file_attr_flags,
+                                name,
+                                extention_block: None
+                            });
+                    }
+                };
             }
         }
         let extention_block = ExtraDataBlock::from_reader(r)?;
@@ -48,7 +66,7 @@ impl FileEntryShellItem{
             Self{
                 is_file,
                 file_size,
-                last_modified,
+                mtime,
                 file_attr_flags,
                 name,
                 extention_block

@@ -1,5 +1,7 @@
-
 //! Utilites used for formating data.
+
+mod rot13;
+pub use rot13::Rot13;
 
 use std::io::{self, Result, Read};
 use byteorder::{ReadBytesExt, LittleEndian};
