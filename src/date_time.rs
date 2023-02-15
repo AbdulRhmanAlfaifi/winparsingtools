@@ -110,3 +110,21 @@ impl Serialize for FileTime {
         serializer.serialize_str(&self.to_string())
     }
 }
+
+impl From<DateTime<Utc>> for FileTime {
+    fn from(value: DateTime<Utc>) -> Self {
+        Self(value)
+    }
+}
+
+impl From<FileTime> for DateTime<Utc> {
+    fn from(value: FileTime) -> Self {
+        value.0
+    }
+}
+
+impl From<&FileTime> for DateTime<Utc> {
+    fn from(value: &FileTime) -> Self {
+        value.0
+    }
+}
