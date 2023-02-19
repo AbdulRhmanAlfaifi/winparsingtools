@@ -11,7 +11,10 @@ pub enum ReaderError {
     Utf16Error(DecodeUtf16Error),
 
     #[error("error while decoding UTF-8: {0}")]
-    Utf8Error(Utf8Error)
+    Utf8Error(Utf8Error),
+
+    #[error("unable to decode the value using CP1252")]
+    CP1252Error
 }
 
 impl From<std::io::Error> for ReaderError {
