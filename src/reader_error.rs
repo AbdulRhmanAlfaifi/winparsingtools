@@ -4,7 +4,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ReaderError {
-    #[error("an IO error has occurred")]
+    #[error("an IO error has occurred: {0}")]
     IoError(std::io::Error),
 
     #[error("error while decoding UTF-16: {0}")]
