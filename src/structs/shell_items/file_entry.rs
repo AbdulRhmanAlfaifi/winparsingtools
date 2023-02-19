@@ -1,7 +1,7 @@
-use std::io::{Cursor, Read, Result, SeekFrom, Seek};
+use std::io::{Cursor, Read, SeekFrom, Seek};
 use byteorder::{LittleEndian, ReadBytesExt};
 use crate::date_time::DosDateTime;
-use crate::utils;
+use crate::{utils, ReaderError};
 use crate::file_system::FileAttributesFlags;
 use crate::structs::ExtraDataBlock;
 use super::Name;
@@ -19,11 +19,11 @@ pub struct FileEntryShellItem{
 }
 
 impl FileEntryShellItem{
-    pub fn from_buffer(buf: &[u8]) -> Result<Self>{
+    pub fn from_buffer(buf: &[u8]) -> Result<Self, ReaderError>{
         Self::from_reader(&mut Cursor::new(buf))
     }
 
-    pub fn from_reader<R: Read+Seek>(r: &mut R) -> Result<Self>{
+    pub fn from_reader<R: Read+Seek>(r: &mut R) -> Result<Self, ReaderError>{
         let class_type = r.read_u8()?;
         let mut is_file = false;
         let mut is_utf16 = false;

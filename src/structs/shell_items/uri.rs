@@ -1,3 +1,4 @@
+use crate::ReaderError;
 use crate::structs::{extra_data_block::ExtraDataBlock};
 use crate::{
     date_time::FileTime,
@@ -5,7 +6,7 @@ use crate::{
 };
 use byteorder::{LittleEndian, ReadBytesExt};
 use serde::Serialize;
-use std::io::{Cursor, Read, Result, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom};
 use super::Name;
 
 /// [URIShellItem](https://github.com/libyal/libfwsi/blob/main/documentation/Windows%20Shell%20Item%20format.asciidoc#37-uri-shell-item) struct parser.
@@ -25,11 +26,11 @@ pub struct URIShellItem {
 }
 
 impl URIShellItem {
-    pub fn from_buffer(buf: &[u8]) -> Result<Self> {
+    pub fn from_buffer(buf: &[u8]) -> Result<Self, ReaderError> {
         Self::from_reader(&mut Cursor::new(buf))
     }
 
-    pub fn from_reader<R: Read + Seek>(r: &mut R) -> Result<Self> {
+    pub fn from_reader<R: Read + Seek>(r: &mut R) -> Result<Self, ReaderError> {
         r.read_u8()?; // Remove class_type
         let flags = r.read_u8()?;
         let data_size = r.read_u16::<LittleEndian>()?;
@@ -64,15 +65,11 @@ impl URIShellItem {
 
         // Remove null bytes
         loop {
-            match r.read_u8(){
-                Ok(byte) => {
-                    if byte != 0x00 {
-                        r.seek(SeekFrom::Current(-1))?;
-                        break;
-                    }
-                },
-                Err(e) => return Err(e)
-            };
+            let byte = r.read_u8()?;
+            if byte != 0x00 {
+                r.seek(SeekFrom::Current(-1))?;
+                break;
+            }
         }
 
         if flags & 0x80 > 0 {

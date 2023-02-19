@@ -21,9 +21,11 @@ use control_panel_category::ControlPanelCategoryShellItem;
 use control_panel_item::ControlPanelItemShellItem;
 pub use id_list::IDList;
 
-use std::{fmt::{Display, Formatter, Result as FmtResult}, io::{Result, Cursor, Read, Seek, SeekFrom}};
+use std::{fmt::{Display, Formatter, Result as FmtResult}, io::{Cursor, Read, Seek, SeekFrom}};
 use byteorder::{LittleEndian, ReadBytesExt};
 use serde::{Serialize, Serializer};
+
+use crate::ReaderError;
 
 #[derive(Debug)]
 pub struct UnimplementedShellItem(Vec<u8>);
@@ -57,7 +59,7 @@ pub enum ShellItemTypes {
     URI(URIShellItem),
     ControlPanelCategory(ControlPanelCategoryShellItem),
     ControlPanelItem(ControlPanelItemShellItem),
-    Unimpleminted(UnimplementedShellItem),
+    Unimplemented(UnimplementedShellItem),
 }
 
 /// ShellItem is struct that reads the struct bytes and decide which shellitem struct to use (FileEntryShellItem, VolumeShellItem, etc).
@@ -79,7 +81,7 @@ impl ShellItem {
     ///
     /// ```
     /// use winparsingtools::structs::shell_items::ShellItem;
-    /// fn main (){
+    /// 
     ///     // a buffer that contains the shell item data
     ///     let shell_item_data: &[u8] = &[
     ///        0x5A, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x85, 0x51, 0x79, 0x62, 0x20, 0x00, 0x74, 0x65,
@@ -90,22 +92,28 @@ impl ShellItem {
     ///        0x74, 0x00, 0x78, 0x00, 0x74, 0x00, 0x00, 0x00, 0x18, 0x00 
     ///    ];
     ///    println!("{:?}\n",ShellItem::from_buffer(&shell_item_data).unwrap());
-    /// }
     /// ```
-    pub fn from_buffer(buf: &[u8]) -> Result<Self>{
+    pub fn from_buffer(buf: &[u8]) -> Result<Self, ReaderError>{
         Self::from_reader(&mut Cursor::new(buf))
     }
-    /// Returns a `ShellItem` from an instence that implements `Read` and `Seek`.
+    /// Returns a `ShellItem` from an instance that implements `Read` and `Seek`.
     ///
     /// # Examples
     ///
     /// ```
+    /// use winparsingtools::structs::shell_items::ShellItem;
+    /// use winparsingtools::ReaderError;
+    /// use std::fs::File;
     /// // Open a file (std::fs::File implements `Read` and `Seek` traits) then pass it to the function
     /// // to parse the shell item data
+    /// 
+    ///# fn main() -> Result<(), ReaderError> { 
     /// let mut shell_item_data = File::open("shell_item_data.bin")?;
-    ///println!("{:?}\n",ShellItem::from_reader(&mut shell_item_data).unwrap());
+    /// println!("{:?}\n",ShellItem::from_reader(&mut shell_item_data).unwrap());
+    ///# Ok(())
+    ///# }
     /// ```
-    pub fn from_reader<R: Read + Seek>(r: &mut R) -> Result<Self> {
+    pub fn from_reader<R: Read + Seek>(r: &mut R) -> Result<Self, ReaderError> {
         let size = r.read_u16::<LittleEndian>()?;
         let class_type = r.read_u8()?;
         r.seek(SeekFrom::Current(-1))?;
@@ -122,7 +130,7 @@ impl ShellItem {
             0x61 => shell_item_data = Some(ShellItemTypes::URI(URIShellItem::from_buffer(&shell_item_buf)?)),
             0x01 => shell_item_data = Some(ShellItemTypes::ControlPanelCategory(ControlPanelCategoryShellItem::from_buffer(&shell_item_buf)?)),
             0x71 => shell_item_data = Some(ShellItemTypes::ControlPanelItem(ControlPanelItemShellItem::from_buffer(&shell_item_buf)?)),
-            _ => shell_item_data = Some(ShellItemTypes::Unimpleminted(UnimplementedShellItem(shell_item_buf.to_vec())))
+            _ => shell_item_data = Some(ShellItemTypes::Unimplemented(UnimplementedShellItem(shell_item_buf.to_vec())))
         };
 
         Ok(Self {
