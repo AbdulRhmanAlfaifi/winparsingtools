@@ -5,3 +5,6 @@ pub mod date_time;
 pub mod file_system;
 pub mod structs;
 pub mod traits;
+
+mod reader_error;
+pub use reader_error::*;

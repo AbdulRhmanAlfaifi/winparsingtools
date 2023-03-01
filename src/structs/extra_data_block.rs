@@ -1,5 +1,6 @@
-use std::io::{Result, Cursor, Read};
+use std::io::{Cursor, Read};
 use byteorder::{LittleEndian, ReadBytesExt};
+use crate::ReaderError;
 use crate::date_time::DosDateTime;
 use crate::utils::{read_utf16_string, read_utf8_string};
 use crate::file_system::FileReference;
@@ -27,11 +28,11 @@ pub struct ExtraDataBlock {
 }
 
 impl ExtraDataBlock{
-    pub fn from_buffer(buf: &[u8]) -> Result<Option<ExtraDataBlock>>{
+    pub fn from_buffer(buf: &[u8]) -> Result<Option<ExtraDataBlock>, ReaderError>{
         Self::from_reader(&mut Cursor::new(buf))
     }
 
-    pub fn from_reader<R: Read>(r: &mut R) -> Result<Option<ExtraDataBlock>>{
+    pub fn from_reader<R: Read>(r: &mut R) -> Result<Option<ExtraDataBlock>, ReaderError>{
         let size =  r.read_u16::<LittleEndian>()?;
         if size == 0 {
             return Ok(None);

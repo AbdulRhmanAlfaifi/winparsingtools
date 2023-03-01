@@ -1,6 +1,6 @@
-use std::io::{Result, Cursor, Read, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom};
 use byteorder::ReadBytesExt;
-use crate::utils::read_utf8_string;
+use crate::{utils::read_utf8_string, ReaderError};
 use super::Name;
 use serde::Serialize;
 
@@ -16,11 +16,11 @@ pub struct NetworkLocationShellItem {
 }
 
 impl NetworkLocationShellItem {
-    pub fn from_buffer(buf: &[u8]) -> Result<Self>{
+    pub fn from_buffer(buf: &[u8]) -> Result<Self, ReaderError>{
         Self::from_reader(&mut Cursor::new(buf))
     }
 
-    pub fn from_reader<R: Read + Seek>(r: &mut R) -> Result<Self>{
+    pub fn from_reader<R: Read + Seek>(r: &mut R) -> Result<Self, ReaderError>{
         let _class_type = r.read_u8()?; // used to extract flags
         let mut description = None;
         let mut comments = None;
