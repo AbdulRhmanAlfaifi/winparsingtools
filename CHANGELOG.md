@@ -1,3 +1,9 @@
+# v2.1.0
+
+* Added `features` section to choose which code you are interested in
+* Added `bytes_to_hex` function to the `utils` to convert `Vec<u8>` to hex string
+* Added `read_uleb128` function to the `utils` to read `uleb128` numbers
+
 # v1.1.0
 
 * Implemented `ControlPanelCategoryShellitem` struct

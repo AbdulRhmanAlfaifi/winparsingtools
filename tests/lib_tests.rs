@@ -4,6 +4,8 @@ use winparsingtools::{
     structs::shell_items::{IDList, ShellItem},
     structs::ExtraDataBlock,
     structs::StringData,
+    utils::bytes_to_hex,
+    utils::read_uleb128,
     utils::Rot13,
 };
 
@@ -104,4 +106,23 @@ fn id_list_test() {
 fn rot13_test() {
     let res = Rot13::from("Uryyb phgvr :Q");
     println!("{}", res);
+}
+
+#[cfg(test)]
+#[test]
+fn uleb128_test() {
+    let data: Vec<u8> = vec![0xE1, 0x8F, 0xA1, 0xB4, 0x8F, 0xBC, 0xBA, 0xED, 0x01];
+    let mut reader = &data[..];
+    let res = read_uleb128(&mut reader).unwrap();
+    println!("{}", res);
+    assert!(133676291378923489 == res);
+}
+
+#[cfg(test)]
+#[test]
+fn bytes_to_hex_test() {
+    let data: Vec<u8> = vec![0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41];
+    let res = bytes_to_hex(&data);
+    println!("{}", res);
+    assert!("4141414141414141" == res);
 }

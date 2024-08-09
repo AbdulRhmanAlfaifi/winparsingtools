@@ -3,10 +3,18 @@ name = "winparsingtools"
 description = "collection of structs and utilities for parsing windows binary formats."
 homepage = "https://github.com/AbdulRhmanAlfaifi/winparsingtools"
 repository = "https://github.com/AbdulRhmanAlfaifi/winparsingtools"
-version = "2.0.0"
+version = "2.1.0"
 authors = ["AbdulRhman Alfaifi <@A__ALFAIFI>"]
 edition = "2018"
 license = "MIT"
+
+[features]
+default = ["date_time", "utils", "structs", "file_system", "shell_items"]
+shell_items = ["date_time", "utils", "structs", "file_system", "utils"]
+structs = ["utils"]
+date_time = []
+file_system = []
+utils = []
 
 [dependencies]
 byteorder = "1.4.2"

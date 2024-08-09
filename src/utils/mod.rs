@@ -1,5 +1,4 @@
 //! Utilites used for formating data.
-
 mod rot13;
 use encoding_rs::WINDOWS_1252;
 pub use rot13::Rot13;
@@ -85,11 +84,11 @@ pub fn read_utf8_string<R: Read>(
 /// read a single byte string in some unknown code page.
 /// Can this happen? Yes. Consider <https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-SHLLINK/%5bMS-SHLLINK%5d.pdf>
 /// which states things like `A NULL–terminated string, defined by the system default code page`
-/// 
+///
 /// no words...
-/// 
+///
 /// This method assumes CP1252, which is common for a lot of systems, and maps invalid characters to '?'
-/// 
+///
 pub fn read_cp1252_string<R: Read>(
     stream: &mut R,
     len: Option<usize>,
@@ -122,4 +121,32 @@ pub fn read_cp1252_string<R: Read>(
     } else {
         Ok(cow.into())
     }
+}
+
+#[allow(dead_code)]
+pub fn read_uleb128<R: Read>(reader: &mut R) -> io::Result<u64> {
+    let mut result: u64 = 0;
+    let mut shift: u32 = 0;
+
+    loop {
+        let mut byte = [0u8; 1];
+        reader.read_exact(&mut byte)?;
+
+        let byte = byte[0];
+        result |= ((byte & 0x7F) as u64) << shift;
+        if (byte & 0x80) == 0 {
+            break;
+        }
+        shift += 7;
+    }
+
+    Ok(result)
+}
+
+pub fn bytes_to_hex(bytes: &Vec<u8>) -> String {
+    bytes
+        .iter()
+        .map(|b| format!("{:02X}", b))
+        .collect::<Vec<String>>()
+        .join("")
 }
