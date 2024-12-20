@@ -1,14 +1,17 @@
-use std::io::{Read, Cursor};
+use crate::{
+    utils::{read_cp1252_string, read_utf16_string, read_utf8_string},
+    ReaderError,
+};
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::fmt::{Formatter, Display, Result as FmtResult};
-use crate::{utils::read_utf16_string, ReaderError};
 use serde::{Serialize, Serializer};
+use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::io::{Cursor, Read};
 
 /// [StringData](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/17b69472-0f34-4bcf-b290-eccdb8de224b) struct parser.
 #[derive(Debug)]
 pub struct StringData {
     pub size: u16,
-    pub string: String
+    pub string: String,
 }
 
 impl StringData {
@@ -20,10 +23,21 @@ impl StringData {
         let size = r.read_u16::<LittleEndian>()?;
         let string = read_utf16_string(r, Some(size as usize))?;
 
-        Ok(Self {
-            size,
-            string
-        })
+        Ok(Self { size, string })
+    }
+
+    pub fn from_reader_utf8<R: Read>(r: &mut R) -> Result<Self, ReaderError> {
+        let size = r.read_u16::<LittleEndian>()?;
+        let string = read_utf8_string(r, Some(size as usize))?;
+
+        Ok(Self { size, string })
+    }
+
+    pub fn from_reader_cp1252<R: Read>(r: &mut R) -> Result<Self, ReaderError> {
+        let size = r.read_u16::<LittleEndian>()?;
+        let string = read_cp1252_string(r, Some(size as usize))?;
+
+        Ok(Self { size, string })
     }
 }
 
