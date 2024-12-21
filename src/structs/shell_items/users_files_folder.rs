@@ -47,15 +47,16 @@ impl UsersFilesFolderShellItem {
             }
         }
         let delegate_guid = Guid::from_reader(r)?;
-        if delegate_guid.to_string().to_lowercase() != "5e591a74-df96-48d3-8d67-1733bcee28ba" {
-            return Err(ReaderError::from(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                format!(
-                    "WRONG GUID : Expected '5e591a74-df96-48d3-8d67-1733bcee28ba' found '{}'",
-                    delegate_guid.to_string().to_lowercase()
-                )),
-            ));
-        }
+        // This resulted in a lot of errors for parsing UserFiles shell items, the guid was `1a740000-5e59-df96-d348-8d671733bcee`
+        // if delegate_guid.to_string().to_lowercase() != "5e591a74-df96-48d3-8d67-1733bcee28ba" {
+        //     return Err(ReaderError::from(std::io::Error::new(
+        //         std::io::ErrorKind::InvalidData,
+        //         format!(
+        //             "WRONG GUID : Expected '5e591a74-df96-48d3-8d67-1733bcee28ba' found '{}'",
+        //             delegate_guid.to_string().to_lowercase()
+        //         )),
+        //     ));
+        // }
         let item_guid = Guid::from_reader(r)?;
         let extention_block = ExtraDataBlock::from_reader(r)?;
         Ok(Self {
