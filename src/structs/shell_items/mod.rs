@@ -58,6 +58,7 @@ impl Serialize for UnimplementedShellItem {
 
 /// The implemented types for shell items.
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ShellItemTypes {
     FileEntry(FileEntryShellItem),
     Volume(VolumeShellItem),
